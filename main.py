@@ -21,6 +21,7 @@ if 'CUDA_VISIBLE_DEVICES' in os.environ:
 
 FLAGS = flags.FLAGS
 
+flags.DEFINE_string('wandb_project', 'qc', 'Wandb project name.')
 flags.DEFINE_string('run_group', 'Debug', 'Run group.')
 flags.DEFINE_integer('seed', 0, 'Random seed.')
 flags.DEFINE_string('env_name', 'cube-triple-play-singletask-task2-v0', 'Environment (dataset) name.')
@@ -67,7 +68,7 @@ class LoggingHelper:
 
 def main(_):
     exp_name = get_exp_name(FLAGS.seed)
-    run = setup_wandb(project='qc', group=FLAGS.run_group, name=exp_name)
+    run = setup_wandb(project=FLAGS.wandb_project, group=FLAGS.run_group, name=exp_name)
     
     FLAGS.save_dir = os.path.join(FLAGS.save_dir, wandb.run.project, FLAGS.run_group, FLAGS.env_name, exp_name)
     os.makedirs(FLAGS.save_dir, exist_ok=True)

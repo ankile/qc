@@ -152,7 +152,9 @@ Four experiment scripts comparing BC vs RL and chunking vs no chunking:
 | Chunked BC | 5 | 1 | `sir_chunked_bc` |
 | Chunked RL | 5 | 32 | `sir_chunked_rl` |
 
-Each with 3 seeds. Scripts in `scripts/sir_*.sh`.
+Each with 3 seeds. Scripts in `scripts/2026-01-13_sir_bc_rl_chunking/`.
+
+**Git Hash:** `95be7054d608090cb51b17eee5e2583f77e45b00`
 
 <!-- TODO: Add results table with success rates -->
 
@@ -164,7 +166,7 @@ Each with 3 seeds. Scripts in `scripts/sir_*.sh`.
 
 - `convert_sir_to_qc.py` - Added observation reordering
 - `main.py` - Added SIR to penalty reward transform
-- `scripts/sir_*.sh` - Created 4 experiment scripts
+- `scripts/2026-01-13_sir_bc_rl_chunking/` - Created 4 experiment scripts
 
 ---
 
