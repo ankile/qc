@@ -30,6 +30,12 @@ class DataSource(IntEnum):
     AUTONOMOUS = 0
     HUMAN = 1
 
+
+class EpisodeOutcome(IntEnum):
+    """Outcome/success status of an episode (matches SIR repo)."""
+    FAILURE = 0
+    SUCCESS = 1
+
 # Default datasets to convert
 DEFAULT_REPO_IDS = [
     "ankile/square-teleop-v5",
@@ -102,17 +108,33 @@ def load_lerobot_dataset(repo_id: str, human_only: bool = False) -> dict:
     print(f"  Valid transitions: {n_total:,} -> {n_valid:,}")
 
     # Apply human_only filter if requested
+    # Matches SIR repo: source=HUMAN AND success=SUCCESS
     if human_only:
         column_names = [col.name for col in table.schema]
-        if "source" in column_names:
+        has_source = "source" in column_names
+        has_success = "success" in column_names
+
+        if has_source:
             source = table.column("source").to_numpy(zero_copy_only=False).astype(np.int64)
             human_mask = source == DataSource.HUMAN
-            valid_mask = valid_mask & human_mask
-            n_human = valid_mask.sum()
-            print(f"  Human-only filter: {n_valid:,} -> {n_human:,} transitions")
         else:
             # No source column = pure teleop dataset, all human
-            print(f"  No 'source' column - assuming all {n_valid:,} transitions are human")
+            human_mask = np.ones(len(states), dtype=bool)
+            print(f"  No 'source' column - assuming all data is human")
+
+        if has_success:
+            success = table.column("success").to_numpy(zero_copy_only=False).astype(np.int64)
+            success_mask = success == EpisodeOutcome.SUCCESS
+        else:
+            # No success column = assume all successful (teleop datasets)
+            success_mask = np.ones(len(states), dtype=bool)
+            print(f"  No 'success' column - assuming all data is successful")
+
+        # Combine: human AND success (matches SIR policy_data_mode="human_only")
+        human_success_mask = human_mask & success_mask
+        valid_mask = valid_mask & human_success_mask
+        n_human_success = valid_mask.sum()
+        print(f"  Human-success filter: {n_valid:,} -> {n_human_success:,} transitions")
 
     return {
         'states': states[valid_mask],
