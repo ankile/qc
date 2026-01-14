@@ -24,11 +24,12 @@ Hypothesis: QC's default hyperparameters may be limiting Q-function learning. DQ
 
 ## Conditions
 
-| Script | Num Samples | W&B Run Group |
-|--------|-------------|---------------|
-| `sir_chunked_bc_dqc.sh` | 1 | `sir_chunked_bc_dqc` |
-| `sir_chunked_rl_dqc.sh` | 32 | `sir_chunked_rl_dqc` |
-| `sir_chunked_rl_dqc_n128.sh` | 128 | `sir_chunked_rl_dqc_n128` |
+| Script | Num Samples | W&B Run Group | Notes |
+|--------|-------------|---------------|-------|
+| `sir_chunked_bc_dqc.sh` | 1 | `sir_chunked_bc_dqc` | DQC hyperparams |
+| `sir_chunked_rl_dqc.sh` | 32 | `sir_chunked_rl_dqc` | DQC hyperparams |
+| `sir_chunked_rl_dqc_n128.sh` | 128 | `sir_chunked_rl_dqc_n128` | DQC hyperparams |
+| `sir_chunked_rl_online.sh` | 32 | `sir_chunked_rl_online` | Original HPs + online RL (1M offline + 1M online) |
 
 Comparing against previous runs:
 - `sir_chunked_bc` (old hyperparams, BC)
@@ -48,6 +49,7 @@ Comparing against previous runs:
 sbatch sir_chunked_bc_dqc.sh
 sbatch sir_chunked_rl_dqc.sh
 sbatch sir_chunked_rl_dqc_n128.sh
+sbatch sir_chunked_rl_online.sh
 ```
 
 ## Results
