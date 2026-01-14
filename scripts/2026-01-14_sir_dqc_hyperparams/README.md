@@ -24,12 +24,23 @@ Hypothesis: QC's default hyperparameters may be limiting Q-function learning. DQ
 
 ## Conditions
 
+### DQC Hyperparameter Experiments (all data)
+
 | Script | Num Samples | W&B Run Group | Notes |
 |--------|-------------|---------------|-------|
 | `sir_chunked_bc_dqc.sh` | 1 | `sir_chunked_bc_dqc` | DQC hyperparams |
 | `sir_chunked_rl_dqc.sh` | 32 | `sir_chunked_rl_dqc` | DQC hyperparams |
 | `sir_chunked_rl_dqc_n128.sh` | 128 | `sir_chunked_rl_dqc_n128` | DQC hyperparams |
 | `sir_chunked_rl_online.sh` | 32 | `sir_chunked_rl_online` | Original HPs + online RL (1M offline + 1M online) |
+
+### Human-Only BC Baselines (matches SIR repo)
+
+Uses only human-generated transitions (source=HUMAN) for 1:1 correspondence with SIR repo BC experiments.
+
+| Script | Chunk Size | W&B Run Group | Notes |
+|--------|-----------|---------------|-------|
+| `sir_human_only_unchunked_bc.sh` | 1 | `sir_human_only_unchunked_bc` | Human-only data, no chunking |
+| `sir_human_only_chunked_bc.sh` | 5 | `sir_human_only_chunked_bc` | Human-only data, with chunking |
 
 Comparing against previous runs:
 - `sir_chunked_bc` (old hyperparams, BC)
@@ -46,10 +57,15 @@ Comparing against previous runs:
 ## Launch Commands
 
 ```bash
+# DQC hyperparameter experiments
 sbatch sir_chunked_bc_dqc.sh
 sbatch sir_chunked_rl_dqc.sh
 sbatch sir_chunked_rl_dqc_n128.sh
 sbatch sir_chunked_rl_online.sh
+
+# Human-only BC baselines
+sbatch sir_human_only_unchunked_bc.sh
+sbatch sir_human_only_chunked_bc.sh
 ```
 
 ## Results

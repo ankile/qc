@@ -26,13 +26,16 @@ def _get_dataset_path(env_name: str) -> str:
     """Get the HDF5 file path for a SIR dataset.
 
     Args:
-        env_name: Environment name like "sir-square-low_dim"
+        env_name: Environment name like "sir-square-low_dim" or "sir-square-human_only-low_dim"
 
     Returns:
         Path to the HDF5 file
+
+    Supported formats:
+        - sir-<task>-<type>: loads from combined/ (all data)
+        - sir-<task>-human_only-<type>: loads from human_only/ (human transitions only)
     """
-    # Parse env_name: sir-<task>-<type>
-    # e.g., "sir-square-low_dim" -> task="square", type="low_dim"
+    # Parse env_name
     parts = env_name.split("-")
     if len(parts) < 3:
         raise ValueError(
@@ -41,11 +44,19 @@ def _get_dataset_path(env_name: str) -> str:
         )
 
     task = parts[1]
-    # Join remaining parts for type (in case of underscores)
-    data_type = "-".join(parts[2:])
 
-    # Build path: ~/.robomimic/sir_<task>/combined/<type>.hdf5
-    base_path = os.path.expanduser(f"~/.robomimic/sir_{task}/combined/{data_type}.hdf5")
+    # Check for human_only variant
+    if len(parts) >= 4 and parts[2] == "human_only":
+        # sir-square-human_only-low_dim -> human_only/low_dim.hdf5
+        subset = "human_only"
+        data_type = "-".join(parts[3:])
+    else:
+        # sir-square-low_dim -> combined/low_dim.hdf5
+        subset = "combined"
+        data_type = "-".join(parts[2:])
+
+    # Build path: ~/.robomimic/sir_<task>/<subset>/<type>.hdf5
+    base_path = os.path.expanduser(f"~/.robomimic/sir_{task}/{subset}/{data_type}.hdf5")
 
     if not os.path.exists(base_path):
         raise FileNotFoundError(

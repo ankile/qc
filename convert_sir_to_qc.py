@@ -4,20 +4,31 @@
 Usage:
     python convert_sir_to_qc.py --output ~/.robomimic/sir_square/combined/low_dim.hdf5
 
+    # Human-only filtering (for BC baselines matching SIR repo):
+    python convert_sir_to_qc.py --human_only --output ~/.robomimic/sir_square/human_only/low_dim.hdf5
+
 This script:
 1. Loads all specified LeRobot datasets from HuggingFace
 2. Extracts transitions (states, actions, rewards, dones, next_states)
-3. Groups by episode
-4. Saves to HDF5 in robomimic-compatible format
+3. Optionally filters to human-only data (source=HUMAN)
+4. Groups by episode
+5. Saves to HDF5 in robomimic-compatible format
 """
 
 import argparse
 import os
+from enum import IntEnum
 from pathlib import Path
 
 import h5py
 import numpy as np
 from tqdm import tqdm
+
+
+class DataSource(IntEnum):
+    """Source of a transition/action in a dataset (matches SIR repo)."""
+    AUTONOMOUS = 0
+    HUMAN = 1
 
 # Default datasets to convert
 DEFAULT_REPO_IDS = [
@@ -33,11 +44,13 @@ DEFAULT_REPO_IDS = [
 ]
 
 
-def load_lerobot_dataset(repo_id: str) -> dict:
+def load_lerobot_dataset(repo_id: str, human_only: bool = False) -> dict:
     """Load a single LeRobot dataset and extract transitions.
 
     Args:
         repo_id: HuggingFace repo ID (e.g., "ankile/square-teleop-v5")
+        human_only: If True, filter to only human-generated transitions (source=HUMAN).
+                    Datasets without a 'source' column are assumed to be all human data.
 
     Returns:
         Dict with arrays: states, actions, next_states, rewards, dones, episode_indices
@@ -82,11 +95,24 @@ def load_lerobot_dataset(repo_id: str) -> dict:
     # Compute next_states via rolling (padded frame format ensures correct terminal states)
     next_states = np.roll(states, -1, axis=0)
 
-    # Filter to valid transitions only (is_valid=1)
+    # Build filter mask: start with valid transitions only
     valid_mask = is_valid == 1
     n_total = len(states)
     n_valid = valid_mask.sum()
-    print(f"  Filtered: {n_total:,} -> {n_valid:,} valid transitions")
+    print(f"  Valid transitions: {n_total:,} -> {n_valid:,}")
+
+    # Apply human_only filter if requested
+    if human_only:
+        column_names = [col.name for col in table.schema]
+        if "source" in column_names:
+            source = table.column("source").to_numpy(zero_copy_only=False).astype(np.int64)
+            human_mask = source == DataSource.HUMAN
+            valid_mask = valid_mask & human_mask
+            n_human = valid_mask.sum()
+            print(f"  Human-only filter: {n_valid:,} -> {n_human:,} transitions")
+        else:
+            # No source column = pure teleop dataset, all human
+            print(f"  No 'source' column - assuming all {n_valid:,} transitions are human")
 
     return {
         'states': states[valid_mask],
@@ -187,6 +213,12 @@ def main():
         default=os.path.expanduser("~/.robomimic/sir_square/combined/low_dim.hdf5"),
         help="Output HDF5 file path"
     )
+    parser.add_argument(
+        "--human_only",
+        action="store_true",
+        help="Filter to human-only transitions (source=HUMAN). "
+             "Datasets without 'source' column are assumed to be all human."
+    )
     args = parser.parse_args()
 
     repo_ids = [r.strip() for r in args.repo_ids.split(",")]
@@ -194,12 +226,14 @@ def main():
     print(f"Converting {len(repo_ids)} datasets:")
     for repo_id in repo_ids:
         print(f"  - {repo_id}")
+    if args.human_only:
+        print("\n*** HUMAN-ONLY MODE: Filtering to source=HUMAN transitions ***")
     print()
 
     # Load all datasets
     all_episodes = []
     for repo_id in repo_ids:
-        data = load_lerobot_dataset(repo_id)
+        data = load_lerobot_dataset(repo_id, human_only=args.human_only)
         episodes = split_into_episodes(data)
         print(f"  -> {len(episodes)} episodes")
         all_episodes.extend(episodes)
