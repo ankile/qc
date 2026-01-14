@@ -63,6 +63,7 @@ def evaluate(
     actor_fn = supply_rng(agent.sample_actions, rng=jax.random.PRNGKey(np.random.randint(0, 2**32)))
     trajs = []
     stats = defaultdict(list)
+    successful_episode_lengths = []
 
     renders = []
     for i in trange(num_eval_episodes + num_video_episodes):
@@ -151,11 +152,20 @@ def evaluate(
         if i < num_eval_episodes:
             add_to(stats, flatten(info))
             trajs.append(traj)
+            # Track successful episode lengths
+            if 'episode' in info and info['episode'].get('final_reward', 0) > 0:
+                successful_episode_lengths.append(info['episode']['length'])
         else:
             renders.append(np.array(render))
 
     for k, v in stats.items():
         stats[k] = np.mean(v)
+
+    # Add mean length of successful episodes (NaN if no successes)
+    if len(successful_episode_lengths) > 0:
+        stats['episode.successful_length'] = np.mean(successful_episode_lengths)
+    else:
+        stats['episode.successful_length'] = float('nan')
 
     return stats, trajs, renders
 
