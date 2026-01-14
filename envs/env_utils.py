@@ -125,6 +125,23 @@ def make_env_and_datasets(env_name, frame_stack=None, action_clip_eps=1e-5):
         eval_env = d4rl_utils.make_env(env_name)
         dataset = d4rl_utils.get_dataset(env, env_name)
         train_dataset, val_dataset = dataset, None
+    elif env_name.startswith("sir-"):
+        # Self-improving-robots (SIR) datasets.
+        # Uses converted HDF5 for training, robomimic env for evaluation.
+        from envs import sir_utils
+        from envs import robomimic_utils
+
+        # Load dataset from converted HDF5
+        dataset = sir_utils.get_dataset(env_name)
+        train_dataset, val_dataset = dataset, None
+
+        # Use robomimic's NutAssemblySquare for evaluation
+        # sir-square-low_dim -> square-mh-low_dim for env
+        robomimic_env_name = "square-mh-low_dim"
+        env = robomimic_utils.make_env(robomimic_env_name, seed=0)
+        eval_env = robomimic_utils.make_env(robomimic_env_name, seed=42)
+        env = EpisodeMonitor(env)
+        eval_env = EpisodeMonitor(eval_env)
     elif env_name.startswith("lift") or env_name.startswith("can") or env_name.startswith("square") or \
         env_name.startswith("transport") or env_name.startswith("tool_hang"):
         # RoboMimic.

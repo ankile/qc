@@ -6,6 +6,7 @@ from log_utils import setup_wandb, get_exp_name, get_flag_dict, CsvLogger
 from envs.env_utils import make_env_and_datasets
 from envs.ogbench_utils import make_ogbench_env_and_datasets
 from envs.robomimic_utils import is_robomimic_env
+from envs.sir_utils import is_sir_env
 
 from utils.flax_utils import save_agent
 from utils.datasets import Dataset, ReplayBuffer
@@ -120,7 +121,7 @@ def main(_):
                 **{k: v[:new_size] for k, v in ds.items()}
             )
         
-        if is_robomimic_env(FLAGS.env_name):
+        if is_robomimic_env(FLAGS.env_name) or is_sir_env(FLAGS.env_name):
             penalty_rewards = ds["rewards"] - 1.0
             ds_dict = {k: v for k, v in ds.items()}
             ds_dict["rewards"] = penalty_rewards
