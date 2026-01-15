@@ -13,17 +13,6 @@
 # Chunked BC on human-only data (matches SIR repo BC baseline)
 # Uses only human-generated transitions (source=HUMAN)
 
-# Activate environment
-eval "$(micromamba shell hook --shell bash)"
-micromamba activate qc310
-
-# Set up paths
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.mujoco/mujoco210/bin:/usr/lib/nvidia
-export MUJOCO_GL=egl
-
-# Change to QC directory
-cd /iris/u/ankile/self-improving-robots-workspace/qc
-
 # Run training
 python main.py \
     --wandb_project=qc-comparison-1 \

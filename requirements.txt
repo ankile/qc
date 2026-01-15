@@ -1,3 +1,4 @@
+# Core dependencies
 absl-py==2.2.2
 annotated-types==0.7.0
 attrs==25.3.0
@@ -39,6 +40,13 @@ ml_collections==1.1.0
 ml_dtypes==0.5.1
 msgpack==1.1.0
 mujoco==3.3.1
+
+# Robosuite/Robomimic for SIR experiments
+# NOTE: After installing, patch robomimic for modern mujoco:
+#   sed -i 's/import mujoco_py/import mujoco/' $(python -c "import robomimic; print(robomimic.__path__[0])")/envs/env_robosuite.py
+#   sed -i 's/(mujoco_py.builder.MujocoException)/(mujoco.FatalError, mujoco.UnexpectedError)/' $(python -c "import robomimic; print(robomimic.__path__[0])")/envs/env_robosuite.py
+robomimic==0.3.0
+robosuite==1.4.1
 nest-asyncio==1.6.0
 numpy==2.2.5
 nvidia-cublas-cu12==12.8.4.1
@@ -84,3 +92,4 @@ urllib3==2.4.0
 wandb==0.19.9
 wrapt==1.17.2
 zipp==3.21.0
+h5py==3.15.1
