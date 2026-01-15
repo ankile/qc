@@ -137,9 +137,10 @@ def make_env_and_datasets(env_name, frame_stack=None, action_clip_eps=1e-5):
 
         # Use robomimic's NutAssemblySquare for evaluation
         # sir-square-low_dim -> square-mh-low_dim for env
+        # require_dataset=False since we only need the env, not the robomimic dataset
         robomimic_env_name = "square-mh-low_dim"
-        env = robomimic_utils.make_env(robomimic_env_name, seed=0)
-        eval_env = robomimic_utils.make_env(robomimic_env_name, seed=42)
+        env = robomimic_utils.make_env(robomimic_env_name, seed=0, require_dataset=False)
+        eval_env = robomimic_utils.make_env(robomimic_env_name, seed=42, require_dataset=False)
         env = EpisodeMonitor(env)
         eval_env = EpisodeMonitor(eval_env)
     elif env_name.startswith("lift") or env_name.startswith("can") or env_name.startswith("square") or \

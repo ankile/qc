@@ -49,25 +49,87 @@ def _get_max_episode_length(env_name):
         raise ValueError(f"Unsupported environment: {env_name}")
 
 
-def make_env(env_name, seed=0):
+def make_env(env_name, seed=0, require_dataset=True):
     """
-    NOTE: should get_dataset() first, so that the metadata is downloaded before creating the environment
-    """
-    # _download_dataset_and_metadata(env_name)
-    dataset_path = _check_dataset_exists(env_name)
+    Create a robomimic environment.
 
-    env_meta = FileUtils.get_env_metadata_from_dataset(dataset_path)
+    Args:
+        env_name: Environment name like "square-mh-low_dim"
+        seed: Random seed
+        require_dataset: If True, requires the dataset to exist (for metadata).
+                        If False, uses hardcoded metadata (for SIR evaluation).
+    """
     max_episode_length = _get_max_episode_length(env_name)
-    
+
+    if require_dataset:
+        dataset_path = _check_dataset_exists(env_name)
+        env_meta = FileUtils.get_env_metadata_from_dataset(dataset_path)
+    else:
+        # Hardcoded metadata for creating env without dataset
+        # Used for SIR experiments where we only need the env for evaluation
+        env_meta = _get_hardcoded_env_meta(env_name)
+
     env = EnvUtils.create_env_from_metadata(
         env_meta=env_meta,
-        render=False, 
+        render=False,
         render_offscreen=False,
     )
     env = RobomimicLowdimWrapper(env, low_dim_keys=low_dim_keys["low_dim"], max_episode_length=max_episode_length)
     env.seed(seed)
-    
+
     return env
+
+
+def _get_hardcoded_env_meta(env_name):
+    """Get hardcoded environment metadata for creating envs without dataset."""
+    task = env_name.split("-")[0]
+
+    # Mapping from task name to robosuite environment name
+    task_to_env = {
+        "lift": "Lift",
+        "can": "PickPlaceCan",
+        "square": "NutAssemblySquare",
+        "transport": "TwoArmTransport",
+        "tool_hang": "ToolHang",
+    }
+
+    if task not in task_to_env:
+        raise ValueError(f"No hardcoded metadata for task: {task}")
+
+    return {
+        "env_name": task_to_env[task],
+        "type": 1,  # robosuite environment type
+        "env_kwargs": {
+            "has_renderer": False,
+            "has_offscreen_renderer": False,
+            "ignore_done": True,
+            "use_object_obs": True,
+            "use_camera_obs": False,
+            "control_freq": 20,
+            "controller_configs": {
+                "type": "OSC_POSE",
+                "input_max": 1,
+                "input_min": -1,
+                "output_max": [0.05, 0.05, 0.05, 0.5, 0.5, 0.5],
+                "output_min": [-0.05, -0.05, -0.05, -0.5, -0.5, -0.5],
+                "kp": 150,
+                "damping": 1,
+                "impedance_mode": "fixed",
+                "kp_limits": [0, 300],
+                "damping_limits": [0, 10],
+                "position_limits": None,
+                "orientation_limits": None,
+                "uncouple_pos_ori": True,
+                "control_delta": True,
+                "interpolation": None,
+                "ramp_ratio": 0.2,
+            },
+            "robots": ["Panda"],
+            "robot_configs": [{
+                "controller_config": None,
+            }],
+        }
+    }
 
 def _check_dataset_exists(env_name):
     # enforce that the dataset exists
