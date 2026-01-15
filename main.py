@@ -257,8 +257,8 @@ def main(_):
         ):
             # Adjust reward for D4RL antmaze.
             int_reward = int_reward - 1.0
-        elif is_robomimic_env(FLAGS.env_name):
-            # Adjust online (0, 1) reward for robomimic
+        elif is_robomimic_env(FLAGS.env_name) or is_sir_env(FLAGS.env_name):
+            # Adjust online (0, 1) reward for robomimic/SIR
             int_reward = int_reward - 1.0
 
         if FLAGS.sparse:
