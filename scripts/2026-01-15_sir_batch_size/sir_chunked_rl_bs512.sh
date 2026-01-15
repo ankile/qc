@@ -27,6 +27,7 @@ cd /iris/u/ankile/self-improving-robots-workspace/qc
 
 # Run training
 python main.py \
+    --wandb_project=qc-comparison-1 \
     --run_group=sir_chunked_rl_bs512 \
     --seed=${SLURM_ARRAY_TASK_ID} \
     --agent.actor_type=best-of-n \
