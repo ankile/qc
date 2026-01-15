@@ -78,5 +78,117 @@ url={https://openreview.net/forum?id=XUks1Y96NR}
 }
 ```
 
+---
+
+## SIR (Self-Improving Robots) Data Experiments
+
+This fork adds support for training on data from the [self-improving-robots](https://github.com/ankile/self-improving-robots) project.
+
+### Environment Setup (micromamba)
+
+```bash
+# Install micromamba if not already installed
+# See: https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html
+
+# Create environment with Python 3.10
+micromamba create -n qc310 python=3.10 -y
+
+# Activate environment
+eval "$(micromamba shell hook --shell bash)"
+micromamba activate qc310
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Install lerobot for dataset loading (required for SIR data conversion)
+pip install lerobot
+
+# Install robomimic for environment (required for evaluation)
+pip install robomimic
+
+# Set up MuJoCo paths (add to your .bashrc or run before training)
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.mujoco/mujoco210/bin:/usr/lib/nvidia
+export MUJOCO_GL=egl
+```
+
+### SIR Dataset Conversion
+
+Convert LeRobot datasets from HuggingFace to QC-compatible HDF5 format:
+
+```bash
+# Convert all data (teleop + DAgger rounds 1-8)
+python convert_sir_to_qc.py --output ~/.robomimic/sir_square/combined/low_dim.hdf5
+
+# Convert human-only data (for BC baselines matching SIR repo)
+# Filters for: source=HUMAN AND success=SUCCESS
+python convert_sir_to_qc.py --human_only --output ~/.robomimic/sir_square/human_only/low_dim.hdf5
+```
+
+**Dataset sizes:**
+- Combined: ~500 episodes, ~107k transitions
+- Human-only: 288 episodes, 28,416 transitions
+
+### SIR Experiment Launch Scripts
+
+All experiment scripts are organized in dated folders under `scripts/`:
+
+#### 2026-01-13: BC vs RL + Chunking Ablation
+Location: `scripts/2026-01-13_sir_bc_rl_chunking/`
+
+| Script | Chunk Size | Num Samples | Description |
+|--------|-----------|-------------|-------------|
+| `sir_unchunked_bc.sh` | 1 | 1 | Unchunked BC baseline |
+| `sir_unchunked_rl.sh` | 1 | 32 | Unchunked RL (best-of-32) |
+| `sir_chunked_bc.sh` | 5 | 1 | Chunked BC |
+| `sir_chunked_rl.sh` | 5 | 32 | Chunked RL (best-of-32) |
+
+#### 2026-01-14: DQC Hyperparameters + Human-Only Baselines
+Location: `scripts/2026-01-14_sir_dqc_hyperparams/`
+
+**DQC-inspired hyperparameter changes:**
+| Parameter | QC Default | DQC |
+|-----------|-----------|-----|
+| `batch_size` | 256 | 4096 |
+| `hidden_dims` | 512 | 1024 |
+| `discount` | 0.99 | 0.995 |
+| `actor_layer_norm` | False | True |
+
+| Script | Description |
+|--------|-------------|
+| `sir_chunked_bc_dqc.sh` | Chunked BC with DQC hyperparams |
+| `sir_chunked_rl_dqc.sh` | Chunked RL (n=32) with DQC hyperparams |
+| `sir_chunked_rl_dqc_n128.sh` | Chunked RL (n=128) with DQC hyperparams |
+| `sir_chunked_rl_online.sh` | Chunked RL + online finetuning (1M offline + 1M online) |
+| `sir_human_only_unchunked_bc.sh` | Unchunked BC on human-only data |
+| `sir_human_only_chunked_bc.sh` | Chunked BC on human-only data |
+
+### Running SIR Experiments
+
+```bash
+# Navigate to scripts folder
+cd scripts/2026-01-14_sir_dqc_hyperparams/
+
+# Launch individual jobs (SLURM)
+sbatch sir_chunked_bc_dqc.sh
+
+# Or run directly (single seed)
+MUJOCO_GL=egl python main.py \
+    --wandb_project=qc-comparison-1 \
+    --run_group=sir_chunked_rl \
+    --seed=1 \
+    --agent.actor_type=best-of-n \
+    --agent.actor_num_samples=32 \
+    --env_name=sir-square-low_dim \
+    --sparse=True \
+    --horizon_length=5 \
+    --eval_interval=100000
+```
+
+**Environment names:**
+- `sir-square-low_dim` - All data (combined)
+- `sir-square-human_only-low_dim` - Human-only data (for BC baselines)
+
+---
+
 ## Acknowledgments
 This codebase is built on top of [FQL](https://github.com/seohongpark/fql). The two rlpd_* folders are directly taken from [RLPD](https://github.com/ikostrikov/rlpd).
