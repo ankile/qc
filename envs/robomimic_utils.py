@@ -20,7 +20,10 @@ def is_robomimic_env(env_name):
     """determine if an env is robomimic"""
     if "low_dim" not in env_name:
         return False
-    task, dataset_type, hdf5_type = env_name.split("-")
+    parts = env_name.split("-")
+    if len(parts) != 3:
+        return False
+    task, dataset_type, hdf5_type = parts
     return task in ("lift", "can", "square", "transport", "tool_hang") and dataset_type in ("mh", "ph")
 
 
