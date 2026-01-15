@@ -1,6 +1,4 @@
 #!/bin/bash
-#SBATCH --partition=iris
-#SBATCH --account=iris
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=12

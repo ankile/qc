@@ -162,6 +162,30 @@ Location: `scripts/2026-01-14_sir_dqc_hyperparams/`
 | `sir_human_only_unchunked_bc.sh` | Unchunked BC on human-only data |
 | `sir_human_only_chunked_bc.sh` | Chunked BC on human-only data |
 
+### Multi-Cluster Setup
+
+This repo supports launching jobs on multiple SLURM clusters (Iris, Anvil, Sherlock). Cluster-specific configs are in `clusters/`.
+
+**Setup (once per cluster):** Add to your `~/.zshrc`:
+
+```bash
+# On Iris:
+source /path/to/qc/clusters/iris.sh
+
+# On Anvil:
+source /path/to/qc/clusters/anvil.sh
+
+# On Sherlock:
+source /path/to/qc/clusters/sherlock.sh
+```
+
+This exports `SBATCH_PARTITION` and `SBATCH_ACCOUNT`, which SLURM reads automatically. Then just use `sbatch` as normal:
+
+```bash
+sbatch script.sh                          # Uses cluster-specific partition/account
+sbatch --partition=gpu-hi script.sh       # Override partition if needed
+```
+
 ### Running SIR Experiments
 
 ```bash
@@ -169,7 +193,7 @@ Location: `scripts/2026-01-14_sir_dqc_hyperparams/`
 cd scripts/2026-01-14_sir_dqc_hyperparams/
 
 # Launch individual jobs (SLURM)
-sbatch sir_chunked_bc_dqc.sh
+qcbatch sir_chunked_bc_dqc.sh
 
 # Or run directly (single seed)
 MUJOCO_GL=egl python main.py \
