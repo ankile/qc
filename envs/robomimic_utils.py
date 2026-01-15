@@ -125,9 +125,7 @@ def _get_hardcoded_env_meta(env_name):
                 "ramp_ratio": 0.2,
             },
             "robots": ["Panda"],
-            "robot_configs": [{
-                "controller_config": None,
-            }],
+            "reward_shaping": False,
         }
     }
 

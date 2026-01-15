@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=12
 #SBATCH --mem=128G
 #SBATCH --gres=gpu:1
-#SBATCH --time=2-00:00
+#SBATCH --time=1-00:00
 #SBATCH --job-name=sir_human_only_chunked_bc
 #SBATCH --output=logs/%x-%j.out
 #SBATCH --array=1-3
